@@ -15,8 +15,9 @@ Vastaa alla oleviin kysymyksiin omin sanoin. Kirjoita vastauksesi kysymysten all
 
 Miksi on ongelma jos controller sisältää kaiken logiikan (tietokantakyselyt, muunnokset, validoinnin)? Anna vähintään kaksi konkreettista haittaa.
 
-**Vastaus:**
-
+Jos controller sisältää kaiken logiikan, se johtaa "fat controller" -ongelmaan, joka tarkoittaa, että controllerista tulee liian monimutkainen ja vaikeasti ylläpidettävä. Tässä haitat:
+1. Testattavuus heikkenee, koska yksittäisen metodin testaaminen vaatii koko controllerin kontekstin.
+2. Koodin uudelleenkäytettävyys vähenee, koska logiikka on sidottu tiettyyn controlleriin eikä sitä voi helposti käyttää muissa osissa sovellusta.
 
 ---
 
@@ -24,11 +25,11 @@ Miksi on ongelma jos controller sisältää kaiken logiikan (tietokantakyselyt, 
 
 Miten vastuut jakautuvat controller:n, service:n ja repository:n välillä tässä harjoituksessa? Kirjoita lyhyt kuvaus kunkin kerroksen tehtävästä.
 
-**Controller vastaa:**
+**Controller vastaa:** HTTP-pyyntöjen vastaanottamisesta.
 
-**Service vastaa:**
+**Service vastaa:** Logiikasta ja DTO-muunnoksista.
 
-**Repository vastaa:**
+**Repository vastaa:** Tietokantakyselyistä ja entiteettien käsittelystä.
 
 
 ---
@@ -37,7 +38,7 @@ Miten vastuut jakautuvat controller:n, service:n ja repository:n välillä täss
 
 Miksi DTO ↔ Entity -muunnokset kuuluvat serviceen eikä controlleriin? Mitä hyötyä siitä on, että controller ei tunne `Product`-entiteettiä lainkaan?
 
-**Vastaus:**
+Muunnokset kuuluvat serviceen, koska se on vastuussa logiikasta ja datan käsittelystä. Controllerin tehtävä on vain vastaanottaa HTTP-pyyntö ja palauttaa HTTP-vastaus, joten sen ei tarvitse tietää tietokantamalleista. Tämä erottelu parantaa koodin selkeyttä, testattavuutta ja ylläpidettävyyttä, koska controller ei ole sidottu tiettyyn tietomalliin ja service voi muuttaa entiteettejä ilman, että controller tarvitsee muuttua.
 
 
 ---
@@ -48,20 +49,21 @@ Miksi DTO ↔ Entity -muunnokset kuuluvat serviceen eikä controlleriin? Mitä h
 
 Miksi controller injektoi `IProductService`-interfacen eikä suoraan `ProductService`-luokkaa? Mitä hyötyä tästä on?
 
-**Vastaus:**
+koska se mahdollistaa löyhemmän kytkennän ja helpottaa testattavuutta.
 
 
 ---
 
 ### Kysymys 5: DI-elinkaaret
 
-Selitä ero näiden kolmen elinkaaren välillä ja anna esimerkki milloin kutakin käytetään:
+Selitä ero näiden kolmen elinkaaren välillä ja anna esimerkki milloin kutakin käytetään: 
 
-- **AddScoped:**
-- **AddSingleton:**
-- **AddTransient:**
+- **AddScoped:** Luodaan uusi instanssi jokaista HTTP-pyyntöä kohden. Käytetään esimerkiksi palveluille, jotka tarvitsevat tietokantayhteyden per pyyntö.
+- **AddSingleton:** Luodaan yksi instanssi koko sovelluksen elinkaaren ajaksi. Käytetään esimerkiksi konfiguraatio- tai cache-palveluille.
+- **AddTransient:** Luodaan uusi instanssi jokaista riippuvuutta kohden. Käytetään esimerkiksi lyhytaikaisille, tilapäisille palveluille.
 
 Miksi `AddScoped` on oikea valinta `ProductService`:lle?
+ProductService tarvitsee tietokantayhteyden, joka on yleensä määritetty scoped-elinkaareksi.
 
 
 ---
@@ -70,7 +72,7 @@ Miksi `AddScoped` on oikea valinta `ProductService`:lle?
 
 Selitä omin sanoin mitä DI-kontti tekee kun HTTP-pyyntö saapuu ja `ProductsController` tarvitsee `IProductService`:ä. Mitä tapahtuu vaihe vaiheelta?
 
-**Vastaus:**
+DI-kontti huomaa, että ProductsController tarvitsee IProductService:ä, luo automaattisesti ProductService-olion sen riippuvuuksineen ja antaa sen controllerille.
 
 
 ---
@@ -79,7 +81,7 @@ Selitä omin sanoin mitä DI-kontti tekee kun HTTP-pyyntö saapuu ja `ProductsCo
 
 Mitä tapahtuu jos unohdat rekisteröidä `IProductService`:n `Program.cs`:ssä? Milloin virhe ilmenee ja miltä se näyttää?
 
-**Vastaus:**
+Silloin sovellus ei pysty luomaan ProductService-oliota, ja HTTP-pyyntöihin vastataan 500 Internal Server Error -virheellä, jossa lukee jotain tyyliin "Unable to resolve service for type IProductService while attempting to activate ProductsController."
 
 
 ---
@@ -90,7 +92,7 @@ Mitä tapahtuu jos unohdat rekisteröidä `IProductService`:n `Program.cs`:ssä?
 
 `ProductService` käytti aluksi `AppDbContext`:ia suoraan. Miksi se refaktoroitiin käyttämään `IProductRepository`:a? Anna vähintään kaksi syytä.
 
-**Vastaus:**
+koska se parantaa koodin erottelua, testattavuutta ja ylläpidettävyyttä. Repository-kerros kapseloi tietokantakyselyt, joten service ei tarvitse tietää tietokannan rakenteesta tai ORM:stä, mikä tekee siitä joustavamman ja helpommin testattavan.
 
 
 ---
@@ -99,9 +101,9 @@ Mitä tapahtuu jos unohdat rekisteröidä `IProductService`:n `Program.cs`:ssä?
 
 Mikä on `IProductService`:n ja `IProductRepository`:n välinen ero? Mitä tietotyyppejä kumpikin käsittelee (DTO vai Entity)?
 
-**IProductService:**
+**IProductService:** käsittelee DTO ja sisältää liiketoimintalogiikkaa, validointia ja muunnoksia.
 
-**IProductRepository:**
+**IProductRepository:** käsittelee Entity ja sisältää vain tietokantakyselyt ja operaatiot.
 
 
 ---
@@ -110,7 +112,7 @@ Mikä on `IProductService`:n ja `IProductRepository`:n välinen ero? Mitä tieto
 
 Kun Vaihe 7:ssä lisättiin repository-kerros, `ProductsController` ei muuttunut lainkaan. Miksi? Mitä tämä kertoo rajapintojen (interface) hyödystä?
 
-**Vastaus:**
+Koska controller ei ole sidottu tiettyyn toteutukseen, vaan se käyttää rajapintaa (IProductService), joka pysyy samana. Tämä kertoo, että rajapinnat mahdollistavat joustavuuden ja erottelun, koska ne määrittelevät vain sopimuksen ilman toteutusta, mikä tekee koodista helpommin ylläpidettävää ja testattavaa.
 
 
 ---
@@ -121,7 +123,7 @@ Kun Vaihe 7:ssä lisättiin repository-kerros, `ProductsController` ei muuttunut
 
 Mikä on `ILogger` ja miksi sitä tarvitaan? Mistä lokit näkee kehitysympäristössä?
 
-**Vastaus:**
+ILogger on ASP.NET Core -sovelluksissa käytetty rajapinta, joka mahdollistaa lokiviestien kirjoittamisen eri tasoilla. Sitä tarvitaan, jotta sovelluksen tapahtumia ja virheitä voidaan seurata ja diagnosoida. Kehitysympäristössä lokit näkyvät yleensä konsolissa, jossa sovellus ajetaan.
 
 
 ---
@@ -130,9 +132,9 @@ Mikä on `ILogger` ja miksi sitä tarvitaan? Mistä lokit näkee kehitysympäris
 
 Selitä ero "odotetun" ja "odottamattoman" virheen välillä. Anna esimerkki kummastakin ja kerro miten ne käsitellään eri tavalla servicessä.
 
-**Odotettu virhe (esimerkki + käsittely):**
+**Odotettu virhe (esimerkki + käsittely):** Jos käyttäjä yrittää hakea tuotetta, joka ei ole olemassa, se on odotettu virhe. Tällöin service palauttaa Result.Failure-objektin, joka kertoo että tuote ei löytynyt, ja controller käsittelee tämän palauttamalla NotFound-vastauksen.
 
-**Odottamaton virhe (esimerkki + käsittely):**
+**Odottamaton virhe (esimerkki + käsittely):** Jos tietokantayhteys epäonnistuu tai tapahtuu muu odottamaton poikkeus, se on odottamaton virhe. Tällöin service voi heittää poikkeuksen, ja controller käsittelee sen esimerkiksi palauttamalla 500 Internal Server Error vastauksen.
 
 
 ---
@@ -155,7 +157,7 @@ if (result.IsFailure)
     return NotFound(new { error = result.Error });
 ```
 
-**Vastaus:**
+Ensimmäisessä tavassa, jos GetByIdAsync palauttaa null, ei ole selvää miksi tuote ei löytynyt (esim. oliko se todella olemassa vai tapahtuiko jokin muu virhe). Toisessa tavassa Result-objekti sisältää selkeän tilan (IsFailure) ja virheilmoituksen (Error), joka auttaa ymmärtämään, miksi tuote ei löytynyt.
 
 
 ---
@@ -164,7 +166,7 @@ if (result.IsFailure)
 
 Miten `Result Pattern` muutti virheiden käsittelyä servicessä? Vertaa Vaihe 8:n `throw;`-tapaa Vaihe 9:n `Result.Failure`-tapaan: mitä eroa niillä on asiakkaan (API:n kutsuja) näkökulmasta?
 
-**Vastaus:**
+Result Pattern tarjoaa selkeämmän ja johdonmukaisemman tavan käsitellä virheitä, koska se ei perustu poikkeuksiin, vaan palauttaa aina onnistuneen tai epäonnistuneen tilan. Asiakkaan näkökulmasta tämä tarkoittaa, että he voivat tarkistaa Result-objektin tilan (IsSuccess/IsFailure) ja saada lisätietoja virheestä ilman, että heidän tarvitsee käsitellä poikkeuksia.
 
 
 ---
@@ -175,7 +177,7 @@ Miten `Result Pattern` muutti virheiden käsittelyä servicessä? Vertaa Vaihe 8
 
 Miksi `ActionResult<ProductResponse>` on parempi kuin `IActionResult`? Anna vähintään kaksi syytä.
 
-**Vastaus:**
+Koska se tarjoaa paremman tyypintarkistuksen ja dokumentaation, mikä auttaa kehittäjiä ymmärtämään, mitä tyyppiä odotetaan palautettavan. Lisäksi se parantaa Swagger UI:n dokumentaatiota, koska se näyttää selkeästi, että endpoint palauttaa ProductResponse-tyyppisiä vastauksia.
 
 
 ---
@@ -184,7 +186,7 @@ Miksi `ActionResult<ProductResponse>` on parempi kuin `IActionResult`? Anna väh
 
 Mitä `[ProducesResponseType]`-attribuutti tekee? Miten se näkyy Swagger UI:ssa?
 
-**Vastaus:**
+Se kertoo Swagger UI:lle, mitä HTTP-statuskoodeja ja vastaustyyppejä endpoint voi palauttaa. se parantaa API-dokumentaatiota ja auttaa kehittäjiä ymmärtämään, mitä odottaa endpointilta.
 
 
 ---
@@ -193,7 +195,7 @@ Mitä `[ProducesResponseType]`-attribuutti tekee? Miten se näkyy Swagger UI:ssa
 
 Sovelluksen toiminnallisuus pysyi täysin samana koko harjoituksen ajan — samat endpointit, samat vastaukset. Mitä refaktorointi tarkoittaa ja miksi se kannattaa, vaikka käyttäjä ei huomaa eroa?
 
-**Vastaus:**
+Refaktorointi tarkoittaa koodin rakenteen parantamista ilman, että sen ulkoinen käyttäytyminen muuttuu. Se kannattaa, koska se tekee koodista helpommin luettavaa, ylläpidettävää ja testattavaa.
 
 
 ---
